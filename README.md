@@ -3,17 +3,17 @@ ZooFence
 
 ZooFence is a research prototype for consistent service partitioning. This project contains part of the source code we use for our SRDS [paper](https://drive.google.com/file/d/0BwFkGepvBDQobnJ2WWtDVjNXUlE) describing our principled approach.
 
-This tutorial has been tested on `Ubuntu 12.04`.
+This tutorial has been tested on `Ubuntu 14.04`.
 
 # Dependencies #
-* JDK 7
+* JDK 7 or JDK 8
 * ZooKeeper 3.4.5
 
 # How to run the code #
 We recommend that you set up a new project from existing sources in your favourite IDE (e.g., [Eclipse](http://stackoverflow.com/questions/2636201/how-to-create-a-project-from-existing-source-in-eclipse-and-then-find-it)).
 
 # Configuration #
-`resources/zkpartitioned.config` contains a sample configuration file.
+`zkpartitioned.config` contains a sample configuration file.
 
 The required configuration parameters are:
 
@@ -23,35 +23,48 @@ The required configuration parameters are:
 * `REDUCTION_FACTOR`: controls how many partitions to remove during a flattening operation.
 
 # How to test ZooFence on localhost #
-1. Deploy ZooKeeper instances
+1. Deploy and start ZooKeeper instances
 
-   Check the [official ZooKeeper documentation](https://zookeeper.apache.org/doc/r3.1.2/zookeeperAdmin.html#sc_singleAndDevSetup) for details on how to deploy and start ZooKeeper instances.
+   `wget https://archive.apache.org/dist/zookeeper/zookeeper-3.4.5/zookeeper-3.4.5.tar.gz`
+   `tar xvfz zookeeper-3.4.5.tar.gz`
 
-   To deploy multiple instances on localhost, use different "port" and "dir" parameters in the ZooKeeper configuration.
-   e.g.,
-   * `zookeeper0: ip:127.0.0.1, port:2181,  dir:/tmp/zookeeper  (zookeeper administrative)`
-   * `zookeeper1: ip:127.0.0.1, port:12181, dir:/tmp/zookeeper1 (instance 1)`
-   * `zookeeper2: ip:127.0.0.1, port:12182, dir:/tmp/zookeeper2 (instance 2)`
-   * `zookeeper3: ip:127.0.0.1, port:12183, dir:/tmp/zookeeper3 (instance 3)`
-   * `zookeeper4: ip:127.0.0.1, port:12184, dir:/tmp/zookeeper4 (instance 4)`
+   * ZooKeeper administrative:
 
-2. Start each ZooKeeper instance:
+     `cd zookeeper-3.4.5`
+     `mv conf/zoo_sample.cfg conf/zoo.cfg`
+     `./bin/zkServer.sh start`
 
-   e.g., To start zookeeper0:
-   * `cd zookeeper0`
-   * `./bin/zkServer.sh start`
-   * `./bin/zkCli.sh -server localhost:2181`
+   * Zookeeper 1:
 
-3. Start the executor:
+     `cp -r zookeeper-3.4.5 zookeeper1 && cd zookeeper1`
+     `in conf/zoo.cfg, set dataDir=/tmp/zookeeper1 and clientPort=12181`
+     `./bin/zkServer.sh start`
 
-   * `java LogExecutor.java`
+   * Zookeeper 2:
+
+     `cp -r zookeeper-3.4.5 zookeeper2 && cd zookeeper2`
+     `in conf/zoo.cfg, set dataDir=/tmp/zookeeper2 and clientPort=12182`
+     `./bin/zkServer.sh start`
+
+   Check the [official ZooKeeper documentation](https://zookeeper.apache.org/doc/r3.1.2/zookeeperAdmin.html#sc_singleAndDevSetup) for more details on how to deploy and start ZooKeeper instances.
+
+2. Start the executor:
+
+   * `cd zoofence`
+   * `mkdir bin`
+   * `javac -cp "jars/log4j-1.2.17.jar:jars/slf4j-api-1.7.5.jar:jars/slf4j-log4j12-1.7.5.jar:jars/zookeeper-3.4.5.jar" ./src/ch/unine/*/*.java -d bin`
+   * `java -cp "jars/log4j-1.2.17.jar:jars/slf4j-api.7.5.jar:jars/slf4j-log4j12-1.7.5.jar:jars/zookeeper-3.4.5.jar:bin" ch/unine/zkexecutor/LogExecutor`
    * Make sure zkpartitioned.config is accessible.
 
 4. Start a client:
 
    e.g., To start `SimpleTest.java`:
-   * `java SimpleTest.java`
+   * `javac -cp "jars/log4j-1.2.17.jar:jars/slf4j-api-1.7.5.jar:jars/slf4j-log4j12-1.7.5.jar:jars/zookeeper-3.4.5.jar:bin" ./src/ch/unine/zkpartitioned/tests/*.java -d bin`
+   * `java -cp "jars/log4j-1.2.17.jar:jars/slf4j-api-1.7.5.jar:jars/slf4j-log4j12-1.7.5.jar:jars/zookeeper-3.4.5.jar:bin" ch/unine/zkpartitioned/tests/SimpleTest`
    * Make sure zkpartitioned.config is accessible.
+
+# Note #
+The correspondence between ZooKeeper instances and partitions needs to be hardcoded in `MappingFunction.java`.
 
 # Contact #
 
